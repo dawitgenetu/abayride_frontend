@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, CheckCircle, XCircle, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Search, CheckCircle, XCircle, ChevronLeft, ChevronRight, Trash2, FileText, ExternalLink } from 'lucide-react';
 import { fetchDrivers, approveDriver, rejectDriver, deleteDriver } from '../services/api';
 import { TableSkeleton } from './ui/Skeleton';
 import { Modal } from './ui/Modal';
@@ -9,22 +9,23 @@ const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'];
 
 const statusStyle = {
   approved: 'badge-success',
-  pending: 'badge-warn',
+  pending:  'badge-warn',
   rejected: 'badge-danger',
 };
 
 export const DriversManagement = () => {
   const toast = useToast();
-  const [drivers, setDrivers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [drivers, setDrivers]           = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [search, setSearch]             = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [page, setPage]                 = useState(1);
+  const [total, setTotal]               = useState(0);
   const [rejectModal, setRejectModal]   = useState(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [deleteModal, setDeleteModal]   = useState(null); // { id, userId, name }
+  const [deleteModal, setDeleteModal]   = useState(null);
   const [deleting, setDeleting]         = useState(false);
+  const [docModal, setDocModal]         = useState(null); // driver object
   const limit = 10;
 
   const load = useCallback(async () => {
@@ -47,8 +48,9 @@ export const DriversManagement = () => {
   const handleApprove = async (id) => {
     try {
       await approveDriver(id);
-      toast('Driver approved');
+      toast('Driver approved ✅');
       load();
+      if (docModal?.id === id) setDocModal(prev => ({ ...prev, approval_status: 'approved' }));
     } catch { toast('Failed to approve driver', 'error'); }
   };
 
@@ -111,22 +113,23 @@ export const DriversManagement = () => {
       </div>
 
       <div className="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border shadow-premium overflow-hidden">
-        {loading ? <TableSkeleton rows={6} cols={5} /> : (
+        {loading ? <TableSkeleton rows={6} cols={6} /> : (
           <div className="overflow-x-auto">
             <table className="w-full text-left whitespace-nowrap">
               <thead className="bg-gray-50/80 dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border">
                 <tr>
-                  {['Driver', 'Phone', 'Vehicle', 'Wallet', 'Status', 'Actions'].map((h) => (
+                  {['Driver', 'Phone', 'Vehicle', 'Wallet', 'Docs', 'Status', 'Actions'].map((h) => (
                     <th key={h} className="px-6 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-dark-border/50">
                 {drivers.length === 0 ? (
-                  <tr><td colSpan={6} className="px-6 py-16 text-center text-gray-400 dark:text-dark-muted">No drivers found.</td></tr>
+                  <tr><td colSpan={7} className="px-6 py-16 text-center text-gray-400 dark:text-dark-muted">No drivers found.</td></tr>
                 ) : drivers.map((d, idx) => {
-                  const balance = Number(d.wallet_balance || 0);
+                  const balance    = Number(d.wallet_balance || 0);
                   const isNegative = balance < 0;
+                  const hasDocs    = d.documents_submitted;
                   return (
                     <tr key={d.id} className={`group hover:bg-gray-50/50 dark:hover:bg-dark-bg transition-colors ${idx % 2 !== 0 ? 'bg-gray-50/20 dark:bg-dark-bg/20' : ''}`}>
                       <td className="px-6 py-4">
@@ -136,7 +139,7 @@ export const DriversManagement = () => {
                           </div>
                           <div>
                             <p className="font-bold text-secondary dark:text-white text-sm">{d.name || d.users?.name || '—'}</p>
-                            <p className="text-xs text-gray-400 dark:text-dark-muted">{d.users?.phone || d.phone || '—'}</p>
+                            <p className="text-xs text-gray-400 dark:text-dark-muted">{d.license_number || '—'}</p>
                           </div>
                         </div>
                       </td>
@@ -146,6 +149,19 @@ export const DriversManagement = () => {
                         <span className={`font-bold text-sm ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                           {balance.toFixed(2)} ETB
                         </span>
+                      </td>
+                      {/* Documents column */}
+                      <td className="px-6 py-4">
+                        {hasDocs ? (
+                          <button
+                            onClick={() => setDocModal(d)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all"
+                          >
+                            <FileText size={12} /> View Docs
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400 dark:text-dark-muted italic">Not submitted</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`badge ${statusStyle[d.approval_status] || 'badge-neutral'} capitalize`}>
@@ -181,7 +197,6 @@ export const DriversManagement = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-dark-border">
             <span className="text-xs text-gray-400 dark:text-dark-muted">Page {page} of {totalPages}</span>
@@ -197,6 +212,105 @@ export const DriversManagement = () => {
         )}
       </div>
 
+      {/* ── Document viewer modal ── */}
+      <Modal open={!!docModal} onClose={() => setDocModal(null)} title={`Documents — ${docModal?.users?.name || docModal?.name || ''}`}>
+        <div className="space-y-5">
+          {/* Driver info summary */}
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="bg-gray-50 dark:bg-dark-bg rounded-xl p-3">
+              <p className="text-xs text-gray-400 dark:text-dark-muted font-semibold uppercase tracking-wide mb-1">Car</p>
+              <p className="font-semibold text-secondary dark:text-white">{docModal?.car_info || '—'}</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-dark-bg rounded-xl p-3">
+              <p className="text-xs text-gray-400 dark:text-dark-muted font-semibold uppercase tracking-wide mb-1">License #</p>
+              <p className="font-semibold text-secondary dark:text-white">{docModal?.license_number || '—'}</p>
+            </div>
+          </div>
+
+          {/* License photo */}
+          <div>
+            <p className="text-xs font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest mb-2">Driver's License</p>
+            {docModal?.license_photo_url ? (
+              <div className="relative group rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border">
+                <img
+                  src={docModal.license_photo_url}
+                  alt="Driver's License"
+                  className="w-full h-48 object-cover"
+                />
+                <a
+                  href={docModal.license_photo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <span className="flex items-center gap-2 bg-white text-secondary font-bold text-sm px-4 py-2 rounded-xl shadow-lg">
+                    <ExternalLink size={14} /> Open Full Size
+                  </span>
+                </a>
+              </div>
+            ) : (
+              <div className="h-24 bg-gray-50 dark:bg-dark-bg rounded-2xl flex items-center justify-center text-gray-400 dark:text-dark-muted text-sm border border-dashed border-gray-200 dark:border-dark-border">
+                Not uploaded
+              </div>
+            )}
+          </div>
+
+          {/* Registration photo */}
+          <div>
+            <p className="text-xs font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest mb-2">Vehicle Registration</p>
+            {docModal?.registration_photo_url ? (
+              <div className="relative group rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border">
+                <img
+                  src={docModal.registration_photo_url}
+                  alt="Vehicle Registration"
+                  className="w-full h-48 object-cover"
+                />
+                <a
+                  href={docModal.registration_photo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <span className="flex items-center gap-2 bg-white text-secondary font-bold text-sm px-4 py-2 rounded-xl shadow-lg">
+                    <ExternalLink size={14} /> Open Full Size
+                  </span>
+                </a>
+              </div>
+            ) : (
+              <div className="h-24 bg-gray-50 dark:bg-dark-bg rounded-2xl flex items-center justify-center text-gray-400 dark:text-dark-muted text-sm border border-dashed border-gray-200 dark:border-dark-border">
+                Not uploaded
+              </div>
+            )}
+          </div>
+
+          {/* Approval actions */}
+          <div className="flex gap-3 pt-2 border-t border-gray-100 dark:border-dark-border">
+            {docModal?.approval_status !== 'approved' && (
+              <button
+                onClick={() => { handleApprove(docModal.id); setDocModal(null); }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl text-sm transition-all"
+              >
+                <CheckCircle size={15} /> Approve Driver
+              </button>
+            )}
+            {docModal?.approval_status !== 'rejected' && (
+              <button
+                onClick={() => { setRejectModal(docModal.id); setDocModal(null); }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition-all"
+              >
+                <XCircle size={15} /> Reject Driver
+              </button>
+            )}
+            {docModal?.approval_status === 'approved' && (
+              <div className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 font-bold rounded-xl text-sm">
+                <CheckCircle size={15} /> Already Approved
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reject modal */}
       <Modal open={!!rejectModal} onClose={() => setRejectModal(null)} title="Reject Driver">
         <div className="space-y-4">
           <p className="text-sm text-gray-500 dark:text-dark-muted">Optionally provide a reason for rejection.</p>
@@ -214,7 +328,8 @@ export const DriversManagement = () => {
         </div>
       </Modal>
 
-      {/* ── Delete confirm modal ── */}
+
+      {/* Delete confirm modal */}
       <Modal open={!!deleteModal} onClose={() => setDeleteModal(null)} title="Delete Driver">
         <div className="space-y-4">
           <p className="text-sm text-gray-500 dark:text-dark-muted">
