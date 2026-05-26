@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, Users, Truck, DollarSign, ArrowUpRight, Activity, Clock, RefreshCw } from 'lucide-react';
 import { fetchAnalytics, fetchAnalyticsCharts, fetchNotificationsSummary } from '../services/api';
 import { Skeleton } from './ui/Skeleton';
+import { PageHeader } from './PageHeader';
 
 const StatCard = ({ label, value, icon: Icon, gradient, sub, loading }) => (
   <div className="stat-card group p-5 relative">
@@ -59,19 +60,16 @@ export const DashboardOverview = () => {
 
   return (
   <div className="space-y-6 animate-fade-in">
-    {/* Header */}
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <p className="text-xs font-medium text-gray-400 dark:text-dark-muted mb-1">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </p>
-        <h1 className="page-title">Good morning, Admin 👋</h1>
-        <p className="page-sub">Here's what's happening in Abay Ride today.</p>
-      </div>
-      <button onClick={load} className="btn-ghost flex items-center gap-2 text-sm py-2 shrink-0">
-        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
-      </button>
-    </div>
+    <PageHeader
+      badge={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+      title="Good morning, Admin 👋"
+      subtitle="Here's what's happening in Abay Ride today."
+      actions={
+        <button onClick={load} className="btn-ghost flex items-center gap-2 text-sm py-2 shrink-0">
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+        </button>
+      }
+    />
 
     {error && (
       <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl px-4 py-3 flex items-center gap-3">

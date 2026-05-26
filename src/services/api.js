@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://abayride-backend.onrender.com/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://abay-ride.up.railway.app/api';
 
 const api = axios.create({ baseURL: BASE_URL });
 

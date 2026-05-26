@@ -12,6 +12,7 @@ import { NotificationsPanel } from './components/NotificationsPanel';
 import { SettingsPage } from './components/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { ToastProvider } from './context/ToastContext';
+import { NotificationsProvider } from './context/NotificationsContext';
 
 const PAGES = {
   overview: DashboardOverview,
@@ -55,21 +56,30 @@ function AppShell() {
   const PageComponent = PAGES[tab] ?? PAGES.overview;
 
   return (
-    <div className="min-h-screen bg-background dark:bg-dark-bg font-sans text-secondary dark:text-dark-text transition-colors duration-300">
-      <Sidebar currentTab={tab} setTab={setTab} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} onLogout={handleLogout} />
-      <Navbar isDark={isDark} setIsDark={setIsDark} isSidebarOpen={isSidebarOpen} onLogout={handleLogout} />
-      <main
-        className="flex-1 transition-all duration-300"
-        style={{ marginLeft: isSidebarOpen ? '15rem' : '4.5rem' }}
-      >
-        <div className="p-7 pt-24">
-          {tab === 'settings'
-            ? <SettingsPage isDark={isDark} setIsDark={setIsDark} />
-            : <PageComponent />
-          }
-        </div>
-      </main>
-    </div>
+    <NotificationsProvider onNavigate={setTab}>
+      <div className="min-h-screen bg-background dark:bg-dark-bg font-sans text-secondary dark:text-dark-text transition-colors duration-300">
+        <div className="admin-mesh fixed inset-0 pointer-events-none z-0" aria-hidden />
+        <Sidebar currentTab={tab} setTab={setTab} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} onLogout={handleLogout} />
+        <Navbar
+          isDark={isDark}
+          setIsDark={setIsDark}
+          isSidebarOpen={isSidebarOpen}
+          onLogout={handleLogout}
+          currentTab={tab}
+        />
+        <main
+          className="flex-1 transition-all duration-300 relative z-[1]"
+          style={{ marginLeft: isSidebarOpen ? '16rem' : '4.75rem' }}
+        >
+          <div className="p-6 sm:p-8 pt-[5.5rem] max-w-[1600px]">
+            {tab === 'settings'
+              ? <SettingsPage isDark={isDark} setIsDark={setIsDark} />
+              : <PageComponent setTab={setTab} />
+            }
+          </div>
+        </main>
+      </div>
+    </NotificationsProvider>
   );
 }
 

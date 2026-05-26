@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, CheckCircle, XCircle, ChevronLeft, ChevronRight, Trash2, FileText, ExternalLink } from 'lucide-react';
+import { Search, CheckCircle, XCircle, ChevronLeft, ChevronRight, Trash2, FileText, ExternalLink, MoveHorizontal } from 'lucide-react';
 import { fetchDrivers, approveDriver, rejectDriver, deleteDriver } from '../services/api';
 import { TableSkeleton } from './ui/Skeleton';
 import { Modal } from './ui/Modal';
+import { PageHeader } from './PageHeader';
 import { useToast } from '../context/ToastContext';
+
+function countDocFiles(driver) {
+  let n = 0;
+  if (driver?.license_photo_url) n += 1;
+  if (driver?.registration_photo_url) n += 1;
+  return n;
+}
 
 const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'];
 
@@ -82,45 +90,54 @@ export const DriversManagement = () => {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="animate-slide-up space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-secondary dark:text-white tracking-tight">Drivers</h1>
-          <p className="text-gray-400 dark:text-dark-muted text-sm mt-1">Approve, reject and manage driver accounts.</p>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search drivers..."
-              className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:border-primary dark:text-white transition-all w-52"
-            />
-          </div>
-          <div className="flex gap-1 bg-gray-100 dark:bg-dark-surface rounded-xl p-1">
-            {STATUS_FILTERS.map((s) => (
-              <button
-                key={s}
-                onClick={() => { setStatusFilter(s); setPage(1); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${statusFilter === s ? 'bg-white dark:bg-dark-bg text-secondary dark:text-white shadow-sm' : 'text-gray-400 dark:text-dark-muted hover:text-secondary dark:hover:text-white'}`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+    <div className="animate-slide-up">
+      <PageHeader
+        badge="Fleet"
+        title="Drivers"
+        subtitle="Approve, reject, and review driver documents."
+        actions={
+          <>
+            <div className="relative">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Search drivers…"
+                className="input-base pl-9 w-52 py-2"
+              />
+            </div>
+            <div className="flex gap-1 bg-gray-100 dark:bg-dark-surface rounded-xl p-1 border border-gray-200/60 dark:border-dark-border">
+              {STATUS_FILTERS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => { setStatusFilter(s); setPage(1); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${statusFilter === s ? 'bg-white dark:bg-dark-bg text-secondary dark:text-white shadow-sm' : 'text-gray-400 dark:text-dark-muted hover:text-secondary dark:hover:text-white'}`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </>
+        }
+      />
 
-      <div className="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border shadow-premium overflow-hidden">
+      <div className="card overflow-hidden rounded-3xl">
         {loading ? <TableSkeleton rows={6} cols={6} /> : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left whitespace-nowrap">
+          <>
+            <p className="table-scroll-hint">
+              <MoveHorizontal size={12} /> Swipe table to see more columns
+            </p>
+            <div className="table-scroll-wrap">
+            <table className="w-full text-left whitespace-nowrap min-w-[720px]">
               <thead className="bg-gray-50/80 dark:bg-dark-bg border-b border-gray-100 dark:border-dark-border">
                 <tr>
-                  {['Driver', 'Phone', 'Vehicle', 'Wallet', 'Docs', 'Status', 'Actions'].map((h) => (
-                    <th key={h} className="px-6 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase">{h}</th>
-                  ))}
+                  <th className="px-5 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase">Driver</th>
+                  <th className="px-5 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase hidden sm:table-cell">Phone</th>
+                  <th className="px-5 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase hidden lg:table-cell">Vehicle</th>
+                  <th className="px-5 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase hidden lg:table-cell">Wallet</th>
+                  <th className="px-5 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase">Docs</th>
+                  <th className="px-5 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase">Status</th>
+                  <th className="px-5 py-4 text-xs font-extrabold text-gray-400 dark:text-dark-muted tracking-widest uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-dark-border/50">
@@ -130,46 +147,61 @@ export const DriversManagement = () => {
                   const balance    = Number(d.wallet_balance || 0);
                   const isNegative = balance < 0;
                   const hasDocs    = d.documents_submitted;
+                  const docCount   = countDocFiles(d);
                   return (
-                    <tr key={d.id} className={`group hover:bg-gray-50/50 dark:hover:bg-dark-bg transition-colors ${idx % 2 !== 0 ? 'bg-gray-50/20 dark:bg-dark-bg/20' : ''}`}>
-                      <td className="px-6 py-4">
+                    <tr key={d.id} className={`group table-row-hover ${idx % 2 !== 0 ? 'bg-gray-50/30 dark:bg-dark-bg/30' : ''}`}>
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 text-white font-bold flex items-center justify-center text-sm shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-700 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-sm">
                             {(d.name || d.users?.name || '?').charAt(0)}
                           </div>
-                          <div>
-                            <p className="font-bold text-secondary dark:text-white text-sm">{d.name || d.users?.name || '—'}</p>
+                          <div className="min-w-0">
+                            <p className="font-bold text-secondary dark:text-white text-sm truncate">{d.name || d.users?.name || '—'}</p>
                             <p className="text-xs text-gray-400 dark:text-dark-muted">{d.license_number || '—'}</p>
+                            <p className="text-xs text-gray-500 dark:text-dark-muted mt-1 sm:hidden">{d.users?.phone || d.phone || '—'}</p>
+                            <div className="lg:hidden mt-1 space-y-0.5">
+                              {d.car_info && (
+                                <p className="text-[11px] text-gray-400 dark:text-dark-muted truncate max-w-[200px]">{d.car_info}</p>
+                              )}
+                              <p className={`text-[11px] font-bold ${isNegative ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                {balance.toFixed(2)} ETB
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-dark-muted">{d.users?.phone || d.phone || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-dark-muted">{d.car_info || '—'}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-dark-muted hidden sm:table-cell">{d.users?.phone || d.phone || '—'}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500 dark:text-dark-muted hidden lg:table-cell max-w-[140px] truncate">{d.car_info || '—'}</td>
+                      <td className="px-5 py-4 hidden lg:table-cell">
                         <span className={`font-bold text-sm ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                           {balance.toFixed(2)} ETB
                         </span>
                       </td>
-                      {/* Documents column */}
-                      <td className="px-6 py-4">
-                        {hasDocs ? (
+                      <td className="px-5 py-4">
+                        {hasDocs || docCount > 0 ? (
                           <button
                             onClick={() => setDocModal(d)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all"
                           >
-                            <FileText size={12} /> View Docs
+                            <FileText size={12} />
+                            View Docs
+                            {docCount > 0 && (
+                              <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[10px] font-extrabold px-1">
+                                {docCount}
+                              </span>
+                            )}
                           </button>
                         ) : (
                           <span className="text-xs text-gray-400 dark:text-dark-muted italic">Not submitted</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-4">
                         <span className={`badge ${statusStyle[d.approval_status] || 'badge-neutral'} capitalize`}>
                           {d.approval_status || 'pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                           {d.approval_status !== 'approved' && (
                             <button onClick={() => handleApprove(d.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-xs font-bold hover:bg-green-100 dark:hover:bg-green-500/20 transition-all">
                               <CheckCircle size={13} /> Approve
@@ -194,7 +226,8 @@ export const DriversManagement = () => {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
 
         {totalPages > 1 && (
