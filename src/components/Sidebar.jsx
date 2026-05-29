@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, Users, Truck, MapPin, CreditCard, DollarSign,
-  Bell, Settings, LogOut, BarChart3, ChevronLeft, ChevronRight,
+  Bell, Settings, LogOut, BarChart3, ChevronLeft, ChevronRight, Radio,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { useNotifications } from '../context/NotificationsContext';
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { id: 'overview',       label: 'Overview',    icon: LayoutDashboard },
   { id: 'users',          label: 'Users',       icon: Users },
   { id: 'drivers',        label: 'Drivers',     icon: Truck },
+  { id: 'fleet',          label: 'Live map',    icon: Radio },
   { id: 'rides',          label: 'Rides',       icon: MapPin },
   { id: 'payments',       label: 'Payments',    icon: CreditCard },
   { id: 'withdrawals',    label: 'Withdrawals', icon: DollarSign },

@@ -7,6 +7,7 @@ const TAB_LABELS = {
   overview: 'Overview',
   users: 'Users',
   drivers: 'Drivers',
+  fleet: 'Live map',
   rides: 'Rides',
   payments: 'Payments',
   withdrawals: 'Withdrawals',

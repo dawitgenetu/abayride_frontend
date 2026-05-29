@@ -38,6 +38,8 @@ export const createAdminUser = (data) => api.post('/admin/users/admin', data);
 
 // Drivers
 export const fetchDrivers = (params = {}) => api.get('/admin/drivers', { params });
+/** Live fleet map: driver GPS + active rides */
+export const fetchDriverLocations = (params = {}) => api.get('/admin/drivers/locations', { params });
 export const approveDriver = (id) => api.patch(`/admin/drivers/${id}/approve`);
 export const rejectDriver = (id, reason) => api.patch(`/admin/drivers/${id}/reject`, { reason });
 export const deleteDriver = (userId) => api.delete(`/admin/users/${userId}`);

@@ -10,6 +10,7 @@ import { WithdrawalsManagement } from './components/WithdrawalsManagement';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { NotificationsPanel } from './components/NotificationsPanel';
 import { SettingsPage } from './components/SettingsPage';
+import { DriverFleetMap } from './components/DriverFleetMap';
 import { LoginPage } from './pages/LoginPage';
 import { ToastProvider } from './context/ToastContext';
 import { NotificationsProvider } from './context/NotificationsContext';
@@ -18,6 +19,7 @@ const PAGES = {
   overview: DashboardOverview,
   users: UserManagement,
   drivers: DriversManagement,
+  fleet: DriverFleetMap,
   rides: RidesManagement,
   payments: PaymentsManagement,
   withdrawals: WithdrawalsManagement,
